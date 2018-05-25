@@ -1,0 +1,10 @@
+setwd("C:\\Users\\thb0f6\\Documents\\Digitalization\\DAND\\7.EDA_with_R\\eda-course-materials\\lesson2")
+getwd()
+statesInfo <- read.csv('stateData.csv')
+View(statesInfo)
+stateSubset <- subset(statesInfo, state.region == 1)
+head(stateSubset, 2)
+dim(stateSubset)
+stateSubsetBracket <- statesInfo[statesInfo$state.region == 1, ]
+head(stateSubsetBracket)
+dim(stateSubsetBracket)
