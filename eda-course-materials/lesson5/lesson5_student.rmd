@@ -1,5 +1,11 @@
 Lesson 5
 ========================================================
+```{r}
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+pf <- read.csv('eda-course-materials\\lesson3\\pseudo_facebook.tsv', sep='\t')
+```
 
 ### Multivariate Data
 Notes:
@@ -15,8 +21,27 @@ Notes:
 Notes:
 
 ```{r Third Qualitative Variable}
+ggplot(aes(gender, age),
+       data=subset(pf, !is.na(gender))) +
+  geom_boxplot() +
+  stat_summary(fun.y=mean, geom='point', shape=4)
+
+ggplot(aes(age, friend_count),
+       data=subset(pf, !is.na(gender))) +
+  geom_line(aes(color=gender), stat='summary', fun.y=median)
+
+#with dlpyr
+pf.fc_by_age_gender <- pf %>%
+  filter(!is.na(gender)) %>%
+  group_by(age, gender) %>%
+  summarise(mean_friend_count=mean(friend_count), median_friend_count=median(friend_count), n=n()) %>%
+  ungroup() %>%
+  arrange(age)
+
 ggplot(aes(x = gender, y = age),
        data = subset(pf, !is.na(gender))) + geom_histogram()
+
+?arrange
 ```
 
 ***
@@ -25,7 +50,8 @@ ggplot(aes(x = gender, y = age),
 Notes:
 
 ```{r Plotting Conditional Summaries}
-
+ggplot(data=pf.fc_by_age_gender, aes(x=age, y=median_friend_count)) +
+  geom_line(aes(color=gender))
 ```
 
 ***
@@ -44,8 +70,11 @@ Notes:
 Notes:
 
 ```{r}
-install.packages('reshape2')
+#install.packages('reshape2')
 library(reshape2)
+pf.fc_by_age_gender.wide <- dcast(pf.fc_by_age_gender,
+                                  age ~ gender,
+                                  value.var='median_friend_count')
 ```
 
 
@@ -55,7 +84,11 @@ library(reshape2)
 Notes:
 
 ```{r Ratio Plot}
+#pf.fc_by_age_gender.wide$ratio_f_m <- pf.fc_by_age_gender.wide$female/pf.fc_by_age_gender.wide$male
 
+ggplot(aes(age, female/male), data=pf.fc_by_age_gender.wide) +
+  geom_line() + 
+  geom_hline(yintercept = 1, alpha=0.5, linetype=2)
 ```
 
 ***
@@ -64,7 +97,9 @@ Notes:
 Notes:
 
 ```{r Third Quantitative Variable}
+pf$year_joined <- 2014 - ceiling(pf$tenure/365)
 
+?round
 ```
 
 ***
@@ -73,7 +108,11 @@ Notes:
 Notes:
 
 ```{r Cut a Variable}
-
+summary(pf$year_joined)
+table(pf$year_joined)
+pf$year.joined_bucket <- cut(pf$year_joined, 
+                             c(2004, 2009, 2011, 2012, 2014), right=TRUE)
+table(pf$year.joined_bucket)
 ```
 
 ***
@@ -82,7 +121,9 @@ Notes:
 Notes:
 
 ```{r Plotting it All Together}
-
+ggplot(aes(age, friend_count),
+       data=subset(pf, !is.na(pf$year.joined_bucket))) +
+  geom_line(aes(color=year.joined_bucket), stat='summary', fun.y=median)
 ```
 
 ***
@@ -91,7 +132,10 @@ Notes:
 Notes:
 
 ```{r Plot the Grand Mean}
-
+ggplot(aes(age, friend_count),
+       data=subset(pf, !is.na(pf$year.joined_bucket))) +
+  geom_line(aes(color=year.joined_bucket), stat='summary', fun.y=mean) +
+  geom_line(stat='summary', fun.y=mean, linetype=2)
 ```
 
 ***
@@ -101,6 +145,7 @@ Notes:
 
 ```{r Friending Rate}
 
+with(subset(pf, tenure > 0), summary(friend_count/tenure))
 ```
 
 ***
@@ -113,7 +158,8 @@ What is the median friend rate?
 What is the maximum friend rate?
 
 ```{r Friendships Initiated}
-
+ggplot(data=subset(pf, tenure >0), aes(x=tenure, y=friendships_initiated/tenure)) +
+  geom_line(aes(color=year.joined_bucket), stat='summary', fun.y=mean)
 ```
 
 ***
@@ -146,6 +192,12 @@ ggplot(aes(x = 90 * round(tenure / 90), y = friendships_initiated / tenure),
   geom_line(aes(color = year_joined.bucket),
             stat = "summary",
             fun.y = mean)
+
+
+
+ggplot(aes(x = tenure, y = friendships_initiated / tenure),
+       data = subset(pf, tenure > 0)) +
+  geom_smooth(aes(color = year.joined_bucket))
 
 ```
 
