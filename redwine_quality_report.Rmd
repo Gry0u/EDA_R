@@ -1,0 +1,228 @@
+---
+title: 'Project: Explore and Summarize Data - Red Wine Quality'
+author: "Gauthier Riou"
+date: "31 Mai 2018"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+##Overview of data set
+This tidy [data set](https://www.google.com/url?q=https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityReds.csv&sa=D&ust=1527776992677000) contains 1,599 red wines with 11 variables on the chemical properties of the wine. At least 3 wine experts rated the quality of each wine, providing a rating between 0 (very bad) and 10 (very excellent).  
+In all my study my dependent variable will be the wine quality. All the other wine properties are considered independent variables analysed to try to predict wine quality.
+```{r, echo=FALSE, message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(reshape2)
+library(knitr)
+library(ggthemes)
+library(GGally)
+
+#Load data
+wine <- read.csv('WineQualityReds.csv')
+#Overview
+head(wine)
+str(wine)
+```
+The data is already in a convenient **tidy** format.  
+X is the observation index.    
+The variables are all listed in separate columns. They are measures of different wine properties for each X observation.     
+Morevoer, all the variables are continuous:  
+So on one hand, scatter plots will be quite appropriate to perform bivariate analysis.  
+On the other hand, there aren't any categorical variables. So I won't really get immediately useful insights by performing summary statistics by groups (using **group_by**), by faceting on categories or with boxplots.  
+Alternatively I can play with the point size parameter on scatter plots to visualize a third variable. Another possiblity will be to define myself bins using **cut** on a choosen continuous variable.  
+In fact the quality variable is discrete, so it will make sense to use it as **color** parameter in our plots or to facet on it  
+To do so, I will by the way have to redefine it as a factor type variable.  
+
+To get some first insights on the data, let me now look at the summary statistics ...
+
+```{r, echo=FALSE, message=FALSE}
+summary(wine)
+```
+...and plot the wine quality distribution
+```{r, echo=F, message=FALSE}
+ggplot(data=wine, aes(x=quality)) +
+  geom_histogram(binwidth=1) +
+  scale_x_continuous(breaks=seq(0,10,1)) +
+  ggtitle('Distribution of wine quality') +
+  theme_hc()
+summary(wine$quality)
+```
+I can already formulate the following observations:  
+
+- Most of the wines have a medium quality.  
+- There are no wines of excellent quality.
+- There are no wines of very bad quality.
+
+
+Due to the number of variables, to help me knowing where to start and decide which variable I want to analyse more in details, let me build first an exhaustive plots matrix using **ggpairs**.
+```{r, echo=F}
+#ggpairs(wine)
+```
+These plots (especially the box in the last column) are helpful to see that there are some outliers, that I should remove when i will choose particular variables to look at.
+Out of these plots and correlations coeffcient, I note that the following couple variables are significantly
+correlated (abolsute value of correlation coefficient > 0.3):  
+
+- **Negatively:**
+    - X and density  
+    Not interesting, X doesn't represent any wine property
+    - pH and fixed acidity: -0.683 --> makes totally sense: [pH](https://en.wikipedia.org/wiki/PH) is a logarithmic scale to measure pH, 0 being the lowest.
+    - volatile acidity and citric acid: -0.552  
+    I can't explain this
+    - citric acid and pH: -0.542  
+    High acids proportion (e.g citric acid) means high acidity means low pH.
+    - densitiy and alcohol: -0.496  
+    Alcohol or [ethanol](https://en.wikipedia.org/wiki/Ethanol) has a relatively low density or is quite "light":
+  0.7893 g/cm3. Compared to~1g/cm3 for water. So the higher alcohol % volume, the lower the wine density.
+    - density and pH: -0.342  
+    pH is low because of the acids, which have a high density (see below).
+- **Positively:**
+    * density and fixed acidity: 0.668  
+    Unlike ethanol the [tartaric acid](https://en.wikipedia.org/wiki/Tartaric_acid) is rather a "heavy" molecule, density 1.665 g/cm3. So the higher the higher the tartaric acid amount, the higher the acidity, the higher the density.
+    * fixed acidity and citric acid: 0.672  
+    Citric acid being an acid, this relationship is not surprising.
+    * citric acid and sulphates: 0.313  
+    I can't explain this
+    * citric acid and density: 0.365  
+    Same explaination as for acidity/tartaric acid. [Citric acid] (https://en.wikipedia.org/wiki/Citric_acid)has a density of 1.665 g/cm3.
+    * residual sugar and density: 0.355  
+    Same exaplaination as for the acids: sugar (both [glucose](https://en.wikipedia.org/wiki/Glucose) and [sucrose](https://en.wikipedia.org/wiki/Sucrose) have a density higher than 1.5 g/cm3, which is significantly higher than water density (~1 g/cm3).
+    * chlorides and sulphates: 0.371  
+    I can't explain this
+    * free and total sulfur dioxide  
+    Altough I am not a chemist, I would say that this is no surprise, so i won't consider this as an interesting finding.
+    
+So let me focus on the following variables for further analysis: 
+- the citric acid
+- the residual sugar
+- the alcohol volume
+Reasons to select these are that the above correlations showed that:
+- citric acid "drives" acidity and pH
+- they all "drive" density (although alcohol and citric acid/residual sugar in different directions)
+- My hinch is that they have a direct influence on the actually perceived wine taste: 'bitterness/freshness' with the acidity brought by citric acid and 'sweetness' brought by residual sugars.  
+
+Now some first questions that I will try to answer are:  
+
+1. Do good wines tend to be sweet or bitter/fresher?
+2. Or are there both sweet good wines and bitter good wines?
+3. What is average alcohol volume of the best wines?  
+
+##Univariate analysis
+###Freshness
+```{r, echo=F, message=FALSE}
+ggplot(data=wine, aes(x=citric.acid)) +
+  geom_histogram(binwidth=0.05) +
+  scale_x_continuous(breaks=seq(0, 1, 0.1)) +
+  ggtitle('Distribution of citric.acid') +
+  theme_hc()
+summary(wine$citric.acid)
+```
+The distribution is slightly positively skewed.
+Lot of observations have 0 g/dm3 of citric acid.
+We have 2 other local modes: 0.3 g/dm3 and 0.55 g/dm3.  
+
+###Sweetness
+```{r, echo=F, message=FALSE}
+ggplot(data=wine, aes(x=residual.sugar)) +
+  geom_histogram(binwidth=0.1) +
+  scale_x_continuous(breaks=seq(0, 16, 1)) +
+  ggtitle('Distribution of residual.sugar') +
+  theme_hc()
+summary(wine$residual.sugar)
+```
+Here the distribution is highly skewed (positevely).
+The Interquartile Range is small. Altough our median and mean are respectively 2.2 and 2.5 g/dm3, there are also wines which are more than 5 times sweeter.  
+
+###Alcohol volume
+```{r, echo=F, message=FALSE}
+ggplot(data=wine, aes(x=alcohol)) +
+  geom_histogram(binwidth=0.1) +
+  scale_x_continuous(breaks=seq(0, 15, 1)) +
+  ggtitle('Distribution of alcohol volume') +
+  theme_hc()
+summary(wine$alcohol)
+```
+This distribution is also positvely skewed. Most wines have a alcohol volume between 9.5 and 11.1 (IQR).  
+
+##Bivariate analysis
+###Freshness vs quality
+```{r, echo=F, message=FALSE}
+p1 <- ggplot(data=wine, aes(x=quality, y=citric.acid)) +
+  geom_point(aes(color='observation'), alpha=0.5, position='jitter') +
+  geom_point(aes(color='mean'),stat='summary', fun.y=mean, size=3) +
+  ylim(quantile(wine$citric.acid, 0.01), quantile(wine$citric.acid, 0.99)) +
+  scale_color_manual('Legend', values=c('observation'='black','mean'='red')) +
+  ggtitle('Freshness vs quality')
+p1
+by(wine$citric.acid, wine$quality, mean)
+```
+Although the overplotting makes difficult to see any trends, thanks to visualising the mean per quality value, I can say that in average, the better the quality the higher the wine 'freshness' level (citric acid concentration).  
+
+###Sweetness vs quality
+```{r, echo=F, message=FALSE}
+p2 <- ggplot(data=wine, aes(x=quality, y=residual.sugar)) +
+  geom_point(aes(color='observation'), alpha=0.5, position='jitter') +
+  geom_point(aes(color='mean'),stat='summary', fun.y=mean, size=3) +
+  ylim(quantile(wine$residual.sugar, 0.01), quantile(wine$residual.sugar, 0.99)) +
+  scale_color_manual('Legend', values=c('observation'='black','mean'='red')) +
+  ggtitle('Sweetness vs quality')
+p2
+by(wine$residual.sugar, wine$quality, mean)
+```
+On the other hand, the quality doesn't seem to be dependent on the level of sugar. The average residual sugars concentration remains constant no matter the quality. So there are both both "good" and "bad" sweet wines.  
+
+###Alcohol volume vs quality
+```{r, echo=F, message=FALSE}
+p3 <- ggplot(data=wine, aes(x=quality, y=alcohol)) +
+  geom_point(aes(color='observation'), alpha=0.5, position='jitter') +
+  geom_point(aes(color='mean'),stat='summary', fun.y=mean, size=3) +
+  ylim(quantile(wine$alcohol, 0.01), quantile(wine$alcohol, 0.99)) +
+  scale_color_manual('Legend', values=c('observation'='black','mean'='red')) +
+  ggtitle('Alcohol volume vs quality')
+p3
+by(wine$alcohol, wine$quality, mean)
+```
+Here despite the decrease for medium quality, I can also see a clear trend:
+better quality wine tend to have in average a higher volume of alcohol.
+
+Let me remind that I just looked at the *average*. On all these plots we see a high variance for all quality levels:
+for instance on the third plot, we have wine of quality level 7, which have 9% alcohol (close to the minimum for all wines) but also more than 13% (maximum for all wines).  
+Let's now look at boxplots to get insights on the median and quartiles (which were already produced by ggpairs by the way).  
+```{r, echo=F, message=F}
+b1 <- ggplot(aes(x=quality, y=citric.acid), data=wine) +
+  geom_boxplot()+
+  ggtitle('Freshness vs quality')+
+  ylim(quantile(wine$citric.acid, 0.01), quantile(wine$citric.acid, 0.99))
+b2 <-ggplot(aes(x=quality, y=residual.sugar), data=wine) +
+  geom_boxplot() +
+  ggtitle('Sweetness vs quality')+
+  ylim(quantile(wine$residual.sugar, 0.01), quantile(wine$residual.sugar, 0.99))
+b3 <-ggplot(aes(x=quality, y=alcohol), data=wine) +
+  geom_boxplot() +
+  ggtitle('Alcohol volume vs quality')+
+  ylim(quantile(wine$alcohol, 0.01), quantile(wine$alcohol, 0.99))
+
+#Note: boxplots weren't showing properly using grid.arrange and knit. I couldn't solve this so I am showing separated plots
+grid.arrange(b1, b2, b3, ncol=1)
+```
+
+Here I note the big difference between the median and Q3 on the boxplot of critical.acid vs quality level 3. Same for the residual sugar level.
+I also see a important number of outliers regarding both residual sugar level and alcohol volume for quality 5 wines.
+```{r, echo=F}
+library(RColorBrewer)
+wine$quality <- factor(wine$quality)
+ggplot(data=wine, aes(alcohol, sulphates)) + 
+  geom_point(aes(color=quality, size=residual.sugar), position='jitter', alpha=0.5) +
+  scale_x_continuous() +
+  scale_color_brewer(type='qual')
+```
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
