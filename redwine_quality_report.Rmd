@@ -1,6 +1,5 @@
 ---
 title: 'Project: Explore and Summarize Data - Red Wine Quality'
-date: "31 Mai 2018"
 output:
   html_document: default
   pdf_document: default
@@ -36,28 +35,115 @@ On the other hand, there aren't any categorical variables. So I won't really get
 Alternatively one could play with the point size parameter on scatter plots to visualize a third variable. Another possiblity will be to define bins using **cut** on a choosen continuous variable.  
 In fact the quality variable is discrete, so it will make sense to use it as **color** parameter in our plots or to facet on it  
 
-To get some first insights on the data, let me now look at the summary statistics ...
+##Univariate analysis
+In adition to the quality variable, thinking about taste and possible flavours of wine, there are 4 more variables that immediately come to mind and that I want to focus on:
 
-```{r, echo=FALSE, message=FALSE}
-summary(wine)
-```
-...and plot the wine quality distribution
+- **citric.acid** for the "bitter" or "fresh" flavour
+- **chlorides** for a "salty" flavour
+- **residual.sugar** for a "sweet" flavour or to measure the "dryness".
+- and of course **alcohol** to measure whether a wine is "mild"" or "strong"...
+
+I will also have a look of the **density** variable.
+
+###Quality
 ```{r, echo=F, message=FALSE}
-ggplot(data=wine, aes(x=quality)) +
+ggplot(data=wine, 
+       aes(x=quality)) +
   geom_histogram(binwidth=1) +
   scale_x_continuous(breaks=seq(0,10,1)) +
-  ggtitle('Distribution of wine quality') +
+  ggtitle('Distribution of wine quality') + 
+  xlab('Quality level (the higher the better)') +
   theme_hc()
+
 summary(wine$quality)
 ```
-I can already formulate the following observations:  
+***Observations***  
 
-- Most of the wines have a medium quality.  
-- There are no wines of excellent quality.
-- There are no wines of very bad quality.
+- Most of the wines have a medium quality: IQR = 1
+- There are no wines of excellent quality. Max quality = 8
+- There are no wines of very bad quality. Min quality = 3  
 
+###Freshness
+```{r, echo=F, message=FALSE}
+ggplot(data=wine,
+       aes(x=citric.acid)) +
+  geom_histogram(binwidth=0.05) +
+  scale_x_continuous(breaks=seq(0, 1, 0.1)) +
+  ggtitle('Distribution of citric.acid') + 
+  xlab('concentration of citric acid (g/dm3)') +
+  theme_hc()
+summary(wine$citric.acid)
+```
+***Observations***  
+The distribution is slightly positively skewed, with lot of observations having 0 g/dm3 of citric acid. I would say that this is normal given the [data set description](https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityInfo.txt) says that citric acid is "found in small quantities".  
+There are 2 other local modes: 0.3 g/dm3 and 0.55 g/dm3.  
 
-Due to the number of variables, to help me knowing where to start and decide which variable I want to analyse more in details, let me build first an exhaustive plots matrix using **ggpairs**.
+###Sweetness
+```{r, echo=F, message=FALSE}
+ggplot(data=wine,
+       aes(x=residual.sugar)) +
+  geom_histogram(binwidth=0.1) +
+  scale_x_continuous(breaks=seq(0, 16, 1)) +
+  ggtitle('Distribution of residual.sugar') + 
+  xlab('Concentration of residual sugar (g/dm3)') +
+  theme_hc()
+summary(wine$residual.sugar)
+```
+***Observations***  
+Here the distribution is highly skewed (positevely).
+The Interquartile Range is quite small: 0.7 g/dm3.  
+Although our median and mean are respectively 2.2 and 2.5 g/dm3, there are also wines which are more than 5 times sweeter: the max is 15.5 g/dm3. 
+
+###Salt
+```{r, echo=F, message=F}
+ggplot(data=wine,
+       aes(x=chlorides)) +
+  geom_histogram(binwidth=0.01) +
+  scale_x_continuous(breaks=seq(0, 1, 0.1)) +
+  ggtitle('Distribution of chlorides') +
+  xlab('Concentration of sodium chloride (g/dm3)') +
+  theme_hc()
+summary(wine$chlorides)
+```
+***Observations***  
+This distribution has a shape similar to the previous distribution: very (postively) skewed.  
+The IQR is also quite narrow: most of the wines have a chlorides concentration between 0.07 and 0.09 g/dm3.  
+The "saltiest" wine in the sample has a chlorides concentration of 0.611 g/dm3.
+
+###Alcohol volume
+```{r, echo=F, message=FALSE}
+ggplot(data=wine,
+       aes(x=alcohol)) +
+  geom_histogram(binwidth=0.1) +
+  scale_x_continuous(breaks=seq(0, 15, 0.5)) +
+  ggtitle('Distribution of alcohol volume') +
+  xlab('Alcohol volume (%)') +
+  theme_hc()
+summary(wine$alcohol)
+```
+***Observations***  
+This distribution is also positively skewed.  
+Most wines have a alcohol volume between 9.5 and 11.1 (IQR).  
+The mode is around 9.5%.  
+No wines have less than 8.4% alcohol (min). This is doesn't surprise me: to get the wine designation, the alcohol % can't go lower than a certain value. [In France](https://fr.wikipedia.org/wiki/Vin) for instance, the minimum allowed is 8.5 %.  
+
+###Density
+```{r, echo=F, message=FALSE}
+ggplot(data=wine, 
+       aes(x=density)) +
+  geom_histogram(bins=60) +
+  scale_x_continuous(breaks=seq(0.985, 1.1, 0.002)) +
+  ggtitle('Distribution of wine density') + 
+  xlab('Density (g/cm3)') +
+  theme_hc()
+
+summary(wine$density)
+```
+***Observations***  
+The wine density distribution is normal, centered around 0.997 (g/cm3) with IQR=0.0022 (g/cm3).  
+
+##Bivariate analysis
+Due to the number of variables, let's build first an exhaustive plots matrix using **ggpairs**.
 ```{r, echo=F, message=F, fig.height=15, fig.width=15}
 ggpairs(wine)
 ```
@@ -88,19 +174,12 @@ Out of these plots and correlations coeffcient, I note that the following couple
     * chlorides and sulphates: 0.371  
     * free and total sulfur dioxide  
     Altough I am not a chemist, I would say that this is no surprise, so i won't consider this as an interesting finding.
-    
-So let me focus on the following variables for further analysis:  
 
-- the citric acid
-- the residual sugar
-- the alcohol volume
-Reasons to select these are that the above correlations showed that:  
+
+To sum up, with regards to the variables I already analysed in the previous section, we can say that:     
 
 - citric acid "drives" acidity and pH
 - they all "drive" density (although alcohol and citric acid/residual sugar in different directions)
-- My hinch is that they have a direct influence on the actually perceived wine taste: 'bitterness/freshness' with the acidity brought by citric acid and 'sweetness' brought by residual sugars. 
-
-Thinking about taste properties, I miss the a measure describing a "salty" flavour. So I will add the chlorides measure to the variables I want to analyse.
 
 Now some first questions that I will try to answer are:  
 
@@ -110,211 +189,314 @@ Now some first questions that I will try to answer are:
     - more or less salty?
 2. Or are there both good and bad wines having a particular taste (sweet/fresh/salty)?
 3. What is average alcohol volume of the best wines?  
+4. Are there any relationships between quality/density and one of my selected variable?
 
-##Univariate analysis
-###Freshness
-```{r, echo=F, message=FALSE}
-ggplot(data=wine, aes(x=citric.acid)) +
-  geom_histogram(binwidth=0.05) +
-  scale_x_continuous(breaks=seq(0, 1, 0.1)) +
-  ggtitle('Distribution of citric.acid') +
-  theme_hc()
-summary(wine$citric.acid)
-```
-The distribution is slightly positively skewed.
-Lot of observations have 0 g/dm3 of citric acid.
-We have 2 other local modes: 0.3 g/dm3 and 0.55 g/dm3.  
-
-###Sweetness
-```{r, echo=F, message=FALSE}
-ggplot(data=wine, aes(x=residual.sugar)) +
-  geom_histogram(binwidth=0.1) +
-  scale_x_continuous(breaks=seq(0, 16, 1)) +
-  ggtitle('Distribution of residual.sugar') +
-  theme_hc()
-summary(wine$residual.sugar)
-```
-Here the distribution is highly skewed (positevely).
-The Interquartile Range is small. Altough our median and mean are respectively 2.2 and 2.5 g/dm3, there are also wines which are more than 5 times sweeter.  
-
-###Salt
-```{r, echo=F, message=F}
-ggplot(data=wine, aes(x=chlorides)) +
-  geom_histogram(binwidth=0.01) +
-  scale_x_continuous(breaks=seq(0, 1, 0.1)) +
-  ggtitle('Distribution of chlorides') +
-  theme_hc()
-summary(wine$chlorides)
-```
-This distribution is very postively skewed. The IQR is quite narrow: most of the wines have a chlorides concentration between 0.07 and 0.09 g/dm3.  
-
-###Alcohol volume
-```{r, echo=F, message=FALSE}
-ggplot(data=wine, aes(x=alcohol)) +
-  geom_histogram(binwidth=0.1) +
-  scale_x_continuous(breaks=seq(0, 15, 1)) +
-  ggtitle('Distribution of alcohol volume') +
-  theme_hc()
-summary(wine$alcohol)
-```
-This distribution is also positvely skewed. Most wines have a alcohol volume between 9.5 and 11.1 (IQR).  
-
-##Bivariate analysis
 ###Freshness vs quality
 ```{r, echo=F, message=FALSE}
-p1 <- ggplot(data=wine, aes(x=quality, y=citric.acid)) +
-  geom_point(aes(color='observation'), alpha=0.5, position='jitter') +
-  geom_point(aes(color='mean'),stat='summary', fun.y=mean, size=3) +
-  ylim(quantile(wine$citric.acid, 0.01), quantile(wine$citric.acid, 0.99)) +
-  scale_color_manual('Legend', values=c('observation'='black','mean'='red')) +
-  ggtitle('Freshness vs quality')
-p1
-by(wine$citric.acid, wine$quality, mean)
+ggplot(data=wine, aes(x=factor(quality),
+                      y=citric.acid)) +
+  geom_jitter(alpha=0.3) +
+  stat_summary(fun.y='mean',
+               geom='point',
+               color='red',
+               size=3) + 
+  geom_boxplot(outlier.shape=NA,
+               color='blue',
+               alpha=0.1) +
+  ylim(quantile(wine$citric.acid, 0.01),
+       quantile(wine$citric.acid, 0.99)) +
+  labs(title='Freshness vs quality',
+       x='Quality level (the higher the better)',
+       y='citric acid concentration (g/dm3)')
 ```
-Although the overplotting makes difficult to see any trends, thanks to visualising the mean per quality levels, I can say that in average, the better the quality the higher the wine 'freshness' level (citric acid concentration).  
+
+***Observations***  
+Although the overplotting makes difficult to see any trends, thanks to visualising the mean per quality levels and overlaying boxplots, we can say that in average, the better the quality the higher the wine 'freshness' level (citric acid concentration). The high variance on all levels of quality is also clearly visible. We note also the asymetry of the quality level distribution (small median/Q3 ratio).
 
 ###Sweetness vs quality
 ```{r, echo=F, message=FALSE}
-p2 <- ggplot(data=wine, aes(x=quality, y=residual.sugar)) +
-  geom_point(aes(color='observation'), alpha=0.5, position='jitter') +
-  geom_point(aes(color='mean'),stat='summary', fun.y=mean, size=3) +
-  ylim(quantile(wine$residual.sugar, 0.01), quantile(wine$residual.sugar, 0.99)) +
-  scale_color_manual('Legend', values=c('observation'='black','mean'='red')) +
-  ggtitle('Sweetness vs quality')
-p2
-by(wine$residual.sugar, wine$quality, mean)
+ggplot(data=wine,
+             aes(x=factor(quality),
+                 y=residual.sugar)) +
+  geom_jitter(alpha=0.3) +
+  geom_boxplot(outlier.shape = NA,
+               color='blue',
+               alpha=0.1) +
+  stat_summary(fun.y=mean,
+               color='red',
+               size=3,
+               geom='point') +
+  ylim(quantile(wine$residual.sugar, 0.01),
+       quantile(wine$residual.sugar, 0.99)) +
+  labs(title='Sweetness vs quality',
+       x='Quality level (the higher the better)',
+       y='Residual sugar concentration (g/dm3)')
 ```
+
+***Observations***  
 On the other hand, the quality doesn't seem to be dependent on the level of sugar. The average residual sugars concentration remains constant no matter the quality. So there are both both "good" and "bad" sweet wines.  
+I also note that the distribution of quality level 3 is very asymetric: around 1.5 g/dm3 difference between median and Q3 and median=Q1. We note also a high number of outliers, especially for the quality level 5.
 
 ###Salt vs quality
-
 ```{r, echo=F, message=FALSE}
-p3 <- ggplot(data=subset(wine, !is.na(wine$chlorides)), aes(x=quality, y=chlorides)) +
-  geom_point(aes(color='observation'), alpha=0.5, position='jitter') +
-  geom_point(aes(color='mean'), stat='summary', fun.y=mean, size=3) +
-  ylim(quantile(wine$chlorides, 0.01), quantile(wine$chlorides, 0.99)) +
-  scale_color_manual('Legend', values=c('observation'='black','mean'='red')) +
-  ggtitle('Salt vs quality')
-p3
-by(wine$chlorides, wine$quality, summary)
+ggplot(data=subset(wine,
+                   !is.na(wine$chlorides)),
+       aes(x=factor(quality),
+           y=chlorides)) +
+  geom_jitter(alpha=0.3) +
+  stat_summary(color='red',
+               fun.y=mean,
+               geom='point',
+               size=3) +
+  geom_boxplot(outlier.shape = NA,
+               color='blue',
+               alpha=0.1) +
+  ylim(quantile(wine$chlorides, 0.01),
+       quantile(wine$chlorides, 0.99)) +
+  scale_color_manual('Legend',
+                     values=c('observation'='black','mean'='red')) +
+  labs(title='Salt vs quality',
+       x='Quality level (the higher the better)',
+       y='Sodium chloride concentration (g/dm3)')
 ```
+
+***Observations***  
 Here the trend is that, in average, better wines tend to have a smaller concentration of salt. 
 In my opinion it makes sense, when it comes to drinks, few people like to drink something salty!  
+We see lot of outliers for medium quality wines. The dispersion is higher for low quality wines than  for high quality wines.
 
 ###Alcohol volume vs quality
 ```{r, echo=F, message=FALSE}
-p4 <- ggplot(data=wine, aes(x=quality, y=alcohol)) +
-  geom_point(aes(color='observation'), alpha=0.5, position='jitter') +
-  geom_point(aes(color='mean'),stat='summary', fun.y=mean, size=3) +
-  ylim(quantile(wine$alcohol, 0.01), quantile(wine$alcohol, 0.99)) +
-  scale_color_manual('Legend', values=c('observation'='black','mean'='red')) +
-  ggtitle('Alcohol volume vs quality')
-p4
-by(wine$alcohol, wine$quality, mean)
-```
-Here despite the decrease for medium quality, I can also see a clear trend:
-better quality wine tend to have, in average, a higher volume of alcohol.
-
-Let me remind that I just looked at the *average*. On all these plots we see a high variance for all quality levels:
-for instance on the third plot, we have wine of quality level 7, which have 9% alcohol (close to the minimum for all wines) but also more than 13% (maximum for all wines).  
-Let's now look at boxplots to get insights on the median and quartiles.
-```{r, echo=F, message=F, fig.height=20}
-wine$quality <- factor(wine$quality)
-b1 <- ggplot(aes(x=quality, y=citric.acid), data=wine) +
-  geom_boxplot()+
-  ggtitle('Freshness vs quality')+
-  ylim(quantile(wine$citric.acid, 0.01), quantile(wine$citric.acid, 0.99))
-b2 <-ggplot(aes(x=quality, y=residual.sugar), data=wine) +
-  geom_boxplot() +
-  ggtitle('Sweetness vs quality')+
-  ylim(quantile(wine$residual.sugar, 0.01), quantile(wine$residual.sugar, 0.99))
-b3 <-ggplot(aes(x=quality, y=chlorides), data=wine) +
-  geom_boxplot() +
-  ggtitle('Salt vs quality')+
-  ylim(quantile(wine$chlorides, 0.01), quantile(wine$chlorides, 0.99))
-b4 <-ggplot(aes(x=quality, y=alcohol), data=wine) +
-  geom_boxplot() +
-  ggtitle('Alcohol volume vs quality')+
-  ylim(quantile(wine$alcohol, 0.01), quantile(wine$alcohol, 0.99))
-
-grid.arrange(b1, b2, b3, b4, ncol=1)
+ggplot(data=wine,
+       aes(x=factor(quality),
+           y=alcohol)) +
+  geom_jitter(alpha=0.3) +
+  geom_boxplot(color='blue',
+               alpha=0.1,
+               outlier.shape=NA) +
+  stat_summary(color='red',
+               size=3,
+               geom='point',
+               fun.y=mean) +
+  ylim(quantile(wine$alcohol, 0.01),
+       quantile(wine$alcohol, 0.99)) +
+  labs(title='Alcohol volume vs quality',
+       x='Quality level (the higher the better)',
+       y='Alcohol volume (%)')
 ```
 
-Here I note the big difference between the median and Q3 on the boxplot of critical.acid vs quality level 3. Same for the residual sugar level.
-I also see a important number of outliers regarding both residual sugar level and alcohol volume for quality 5 wines.
-The trends seen on the previous plots are also confirmed. Better wines tend to have:  
+***Observations***  
+Here despite the decrease for medium quality, I can also see a clear trend: better quality wine tend to have, in average, a higher volume of alcohol.  
+We see again lot of outliers for medium quality wines (quality 5). The quality 3 wines distribution is again quite asymetric (low ratio median/Q3).
 
-- a higher citric.acid concentration
-- a higher volume of alcohol
-- a smaller concetration of chlorides.
+###Density vs quality
+```{r, echo=F, message=FALSE}
+ggplot(data=wine,
+       aes(x=factor(quality),
+           y=density)) +
+  geom_jitter(alpha=0.3) +
+  geom_boxplot(color='blue',
+               alpha=0.1,
+               outlier.shape=NA) +
+  stat_summary(fun.y=mean,
+               color='red',
+               geom='point',
+               size=3) +
+  ylim(quantile(wine$density, 0.01),
+       quantile(wine$density, 0.99)) +
+  labs(title='Density vs quality',
+       x='Quality level (the higher the better)',
+       y='Density (g/cm3)')
+```
+
+***Observations***  
+In average better wines tend to have a lower density.  
+Again lot of outliers for medium quality wines (quality 5). For all quality levels, the distributions are rather symetric.
 
 ##Multivariate Analysis
-As I couldn't make any conclusions regarding the sugar concentration based on the previous plots, I want to build visualization of sugar level vs quality vs the other variables.  
-```{r, echo=F, message=F, fig.height=15}
-g1 <- ggplot(data=subset(wine, wine$quality %in% c(3, 4, 7, 8)),
-                         aes(x=residual.sugar, y=citric.acid)) +
-  geom_point(aes(color=quality), position='jitter') +
-  scale_color_brewer(type='div') +
-  scale_y_sqrt(breaks=seq(0, 1, 0.1)) +
-  scale_x_continuous(breaks=seq(0,13,1), limits=c(1,7))
+To support the multivariate analysis, let's group the quality levels and visualize the different quality group with a different color:  
 
-g2 <- ggplot(data=subset(wine, wine$quality %in% c(3, 4, 7, 8)),
-                         aes(x=residual.sugar, y=alcohol)) +
-  geom_point(aes(color=quality), position='jitter') +
-  scale_color_brewer(type='div') +
-  scale_x_continuous(breaks=seq(0, 13, 1), limits=c(1, 7))
-
-g3 <- ggplot(data=subset(wine, wine$quality %in% c(3, 4, 7, 8)),
-                         aes(x=residual.sugar, y=chlorides)) +
-  geom_point(aes(color=quality), position='jitter') +
-  scale_color_brewer(type='div') +
-  scale_x_continuous(breaks=seq(0,13,1), limits=c(1,7)) +
-  ylim(0, 0.25)
-
-grid.arrange(g1, g2, g3, ncol=1)
+- low: quality levels 3
+- medium: quality levels 4, 5 and 6
+- high: quality levels 7 and 8  
+```{r}
+wine$quality.levels <- cut(wine$quality, breaks=c(2.9, 3.1, 6.1, 8.1),
+                           include.lowest = T,
+                           labels=c('Low', 'Medium', 'High')) 
 ```
 
-Based on this plots, because of "noise"" and "overplotting", it is still hard to state any clear relationship between sugar level and wine quality.
-Something interesting though: on the first graph we see that good wines (quality above or equal to 7) with a citric.acid concentration less than 0.3 g/dm3, keep their level of residual sugar between 1 and 3 g/dm3. As soon as the concentration of citric.acid is higher than 0.3, the level of sugar doesn't matter anymore.  
-Maybe it is because a good wine have to be "balanced" and maybe a sweet taste can only be balanced by a minimum level of "bitterness" brought by the citric acid.
-
-Let's try now to reduce the noise:
-```{r, message=F}
-p5 <- ggplot(data=subset(wine, wine$quality %in% c(3, 4, 7, 8)),
-       aes(x = round(residual.sugar/2)*2, y=alcohol)) + 
-         geom_line(stat='summary', fun.y=mean, aes(color=quality))
-
-p6 <- ggplot(data=subset(wine, wine$quality %in% c(3, 4, 7, 8)),
-       aes(x = round(residual.sugar/2)*2, y=chlorides)) + 
-         geom_line(stat='summary', fun.y=mean, aes(color=quality))
-
-p7 <- ggplot(data=subset(wine, wine$quality %in% c(3, 4, 7, 8)),
-       aes(x = round(residual.sugar/2)*2, y=citric.acid)) + 
-         geom_line(stat='summary', fun.y=mean, aes(color=quality))
-
-
-grid.arrange(p5, p6, p7, ncol=1)
-```
-
-###Summary
-####Final Plots
-I think that reading the previous plots it is possible to define some ranges for the levels of
-citric.acid, residual.sugar, alcohol and chlorides that help to clearly separate a excellent wine to a bad one.  
-Note that quality 3 indicates a bad wine and 8 a very good wine.
 ```{r, echo=F, message=F}
-finalplot1 <- ggplot(data=subset(wine, wine$quality %in% c(3, 8)),
-       aes(x = round(residual.sugar/2)*2, y=alcohol)) + 
-         geom_line(stat='summary', fun.y=mean, aes(color=quality))
+ggplot(data=wine,
+       aes(x=residual.sugar,
+           y=citric.acid)) +
+  geom_point(aes(color=quality.levels),
+             position='jitter') +
+  scale_color_brewer(type='seq') +
+  scale_y_sqrt(breaks=seq(0, 1, 0.1)) +
+  scale_x_continuous(breaks=seq(0,13,1),
+                     limits=c(1,7)) +
+  labs(title='Relationship of citric acid and sugar concentration
+       with colored quality levels',
+       x='Residual sugar concentration (g/dm3)',
+       y='Citric acid concentration (g/dm3)') +
+  geom_hline(yintercept=0.3) +
+  geom_vline(xintercept=3) +
+  theme_dark()
 
-finalplot2 <- ggplot(data=subset(wine, wine$quality %in% c(3, 8)),
-       aes(x = round(residual.sugar/2)*2, y=chlorides)) + 
-         geom_line(stat='summary', fun.y=mean, aes(color=quality))
-
-finalplot3 <- ggplot(data=subset(wine, wine$quality %in% c(3, 8)),
-       aes(x = round(residual.sugar/2)*2, y=citric.acid)) + 
-         geom_line(stat='summary', fun.y=mean, aes(color=quality))
-
-grid.arrange(finalplot1, finalplot2, finalplot3, ncol=1)
 ```
+
+***Observations***  
+Good wines (quality above or equal to 7) with a citric.acid concentration less than 0.3 g/dm3, keep their level of residual sugar between 1 and 3 g/dm3. As soon as the concentration of citric.acid is higher than 0.3, the level of sugar doesn't matter anymore.    
+Maybe it is because a good wine have to be "balanced" and maybe a sweet taste can only be balanced by a minimum level of "bitterness" brought by the citric acid.  
+
+```{r, echo=F, message=F}
+ggplot(data=wine,
+       aes(x=density,
+           y=alcohol,
+           color=quality.levels)) +
+  geom_jitter() +
+  scale_x_continuous(breaks=seq(0.985, 1.002, 0.002)) +
+  scale_color_brewer(type='seq') +
+  labs(title='Relationship of density and alcohol
+       with colored quality levels',
+       x='Density (g/cm3)',
+       y='Alcohol volume (%)') +
+    theme_dark()
+```
+
+***Observations***  
+No matter the quality, it seems that for a given **increase** of density, there is the same proportional **decrease** in alcohol volume.  
+However for a given density value, a good quality wine always have a higher alcohol volume.  
+
+
+```{r, echo=F, message=F}
+ggplot(data=wine,
+       aes(x = round(residual.sugar/2)*2,
+           y=alcohol)) +
+  geom_line(stat='summary',
+            fun.y=mean,
+            aes(color=factor(quality))) +
+  labs(title='Evolution of mean alcohol volume depending
+on sugar concentration with color per quality group',
+       x='Residual sugar (g/dm3)',
+       y='Alcohol volume (%)') +
+  scale_color_brewer(type='seq') +
+  theme_dark()
+```
+
+***Observations***  
+Based on these plots, we see for instance that to get good quality wines (8), the alcohol volume increases together with the sugar concentration.
+
+```{r, echo=F, message=F}
+ggplot(data=wine,
+       aes(x = round(residual.sugar/2)*2,
+           y=chlorides)) + 
+  geom_line(stat='summary',
+            fun.y=mean,
+            aes(color=factor(quality))) +
+  scale_color_brewer(type='seq') +
+  theme_dark() +
+  labs(title='Evolution of mean chlorides concentration
+       depending on sugar concentration with
+       coloured quality levels')
+```
+
+***Observations***  
+Looking at the extreme opposites (quality levels 3 and 8), we see that the relationships are opposite: in average the chlorides concentration would increase together with the sugar concentration for a high quality wine, while it would decrease for a bad quality wine.
+
+```{r, echo=F, message=F}
+
+ggplot(data=wine,
+       aes(x = round(residual.sugar/2)*2,
+           y=citric.acid)) + 
+  geom_line(stat='summary',
+            fun.y=mean,
+            aes(color=factor(quality))) +
+  scale_color_brewer(type='seq') +
+  theme_dark() +
+  labs(title='Evolution of mean citric acid concentration depending on
+       sugar concentration with coloured quality levels')
+```
+
+***Observations***  
+Looking again at the extreme opposites (quality levels 3 and 8), we see that the relationships are also opposite: in average the citric acid concentration would increase together with the sugar concentration for a high quality wine, while it would decrease for a bad quality wine.  
+
+##Summary
+###Final Plots
+####Salt
+```{r, echo=F, message=FALSE}
+ggplot(data=subset(wine,
+                   !is.na(wine$chlorides)),
+       aes(x=factor(quality),
+           y=chlorides)) +
+  geom_jitter(alpha=0.3) +
+  stat_summary(color='red',
+               fun.y=mean,
+               geom='point',
+               size=3) +
+  geom_boxplot(outlier.shape = NA,
+               color='blue',
+               alpha=0.1) +
+  ylim(quantile(wine$chlorides, 0.01),
+       quantile(wine$chlorides, 0.99)) +
+  scale_color_manual('Legend',
+                     values=c('observation'='black','mean'='red')) +
+  labs(title='Salt vs quality',
+       x='Quality level (the higher the better)',
+       y='Sodium chloride concentration (g/dm3)')
+```
+
+***Finding 1***  
+Reading this plot one conclusion is clear: good wines don't taste salty!
+
+####Linear relationship between density and alcohol volume 
+```{r, echo=F, message=F}
+ggplot(data=wine,
+       aes(x=density,
+           y=alcohol,
+           color=quality.levels)) +
+  geom_jitter() +
+  scale_x_continuous(breaks=seq(0.985, 1.002, 0.002)) +
+  scale_color_brewer(type='seq') +
+  geom_smooth(method='lm', se=F) +
+  labs(title='Relationship of density and alcohol
+       with colored quality levels',
+       x='Density (g/cm3)',
+       y='Alcohol volume (%)') +
+    theme_dark()
+```
+
+***Finding 2***  
+The density decreases linearly with alcohol volume. And better wines have a higher alcohol concentration.
+
+####Relationship between citric acid and sugar concentration depending on quality levels
+```{r, echo=F, message=F}
+str(wine)
+ggplot(data=subset(wine,
+                   wine$quality %in% c(3, 8)), 
+       aes(x = round(residual.sugar/2)*2,
+           y=citric.acid)) + 
+  geom_line(stat='summary',
+            fun.y=mean,
+            aes(color=factor(quality))) +
+  scale_color_brewer(type='seq') +
+  theme_dark() +
+  labs(title='Evolution of mean citric acid concentration depending on
+       sugar concentration with coloured quality levels')
+```
+
+***Finding 3***    
+Depending on the wine quality, the critical acid concentration moves in clearly opposite direction when the sugar concentration increases:  
+
+- good wines contains more citric acid when they get sweeter
+- bad wines contains less citric acid when they get sweeter
+
+I would interpret this as a sign that good wines have to be "balanced": the more sugar, the more citric acid, so that the taste doesn't get dominated by a sweet note.  
+On the opposite a bad wine could be qualified as such precisely because one taste note like sweetness dominates all the others.
+
+##Reflections
+First of all my analysis is not exhaustive: there are 12 inputs variables in this data set, I only covered half of them (quality, sugar, chlorides, citric acid, density, alcohol). I especially didn't cover the sulfur dioxide variable. However the data set description says about sulfur dioxide that "at free SO2 concentrations over 50 ppm, SO2 becomes evident in the nose and taste of wine". So sulfur dioxide would probably be an interesting variable to consider when trying to understand therelationship between wine quality and wine chemical properties.  
+
+Scondly the wine quality histogram showed that the frequences of quality classes are very unbalanced: especially we don't have a lot of observations of very bad or very good wines, compared to the frequency of medium quality wines. It means that our conclusions regarding the less represented classes are more likely to be approximative than the ones regarding the most represented classes. This could be improved by having a sample of observations with balanced classes (uniform quality histogram). In this case conclusions based on comparisons between classes statistics would be more reliable.
 
 
