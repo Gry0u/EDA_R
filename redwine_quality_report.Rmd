@@ -8,7 +8,23 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 ```
-##Overview of data set
+
+##Table of content
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#univariate">Univariate Analysis</a></li>
+<li><a href="#bivariate">Bivariate Analysis</a></li>
+<li><a href="#multivariate">Multivariate Analysis</a></li>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#reflections">Reflections</a></li>
+</ul>
+
+
+
+<a id='overview'></a>  
+
+## Overview of data set  
+
 This tidy [data set](https://www.google.com/url?q=https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityReds.csv&sa=D&ust=1527776992677000) contains 1,599 red wines with 11 variables describing chemical wine properties. At least 3 wine experts rated the quality of each wine, providing a rating between 0 (very bad) and 10 (very excellent).  
 In all my study, my dependent variable will be the wine quality. All the other wine properties are considered independent variables analysed to try to predict wine quality.
 ```{r, echo=FALSE, message=FALSE}
@@ -35,17 +51,21 @@ On the other hand, there aren't any categorical variables. So I won't really get
 Alternatively one could play with the point size parameter on scatter plots to visualize a third variable. Another possiblity will be to define bins using **cut** on a choosen continuous variable.  
 In fact the quality variable is discrete, so it will make sense to use it as **color** parameter in our plots or to facet on it  
 
-##Univariate analysis
-In adition to the quality variable, thinking about taste and possible flavours of wine, there are 4 more variables that immediately come to mind and that I want to focus on:
+In adition to the quality variable, thinking about taste and possible flavours of wine, there are 4 more variables that immediately come to mind and that I will to focus on in the multivariate analysis part:
 
 - **citric.acid** for the "bitter" or "fresh" flavour
 - **chlorides** for a "salty" flavour
 - **residual.sugar** for a "sweet" flavour or to measure the "dryness".
 - and of course **alcohol** to measure whether a wine is "mild"" or "strong"...
+- I will also have a look of the **density** variable.
 
-I will also have a look of the **density** variable.
+<a id='univariate'></a>  
 
-###Quality
+##Univariate analysis  
+
+Before using ggpairs for the bivariate analysis, let's build histogram of all the variables.  
+
+###Quality  
 ```{r, echo=F, message=FALSE}
 ggplot(data=wine, 
        aes(x=quality)) +
@@ -142,7 +162,106 @@ summary(wine$density)
 ***Observations***  
 The wine density distribution is normal, centered around 0.997 (g/cm3) with IQR=0.0022 (g/cm3).  
 
-##Bivariate analysis
+###Fixed acidity
+```{r, echo=F, message=FALSE}
+ggplot(data=wine, 
+       aes(x=fixed.acidity)) +
+  geom_histogram(bins=20) +
+  scale_x_continuous(breaks=seq(4, 17, 1)) +
+  ggtitle('Distribution of fixed acidity') + 
+  xlab('tartaric acid (g/dm3)') +
+  theme_hc()
+
+summary(wine$fixed.acidity)
+```
+***Obervartions***
+Distribution close to a normal distribution, centered around 8, although not perfectly symetrical.  
+
+###Volatile acidity  
+
+```{r, echo=F, message=FALSE}
+ggplot(data=wine, 
+       aes(x=volatile.acidity)) +
+  geom_histogram(bins=30) +
+  scale_x_continuous(breaks=seq(0, 1.6, 0.2)) +
+  ggtitle('Distribution of volatile acidity') + 
+  xlab('acetic acid (g/dm3)') +
+  theme_hc()
+
+summary(wine$volatile.acidity)
+```
+***Obervations***  
+
+Normal distribution shape. Distribution with the least dispersion seen so far.
+
+###Free sulfur dioxide
+```{r, echo=F, message=FALSE}
+ggplot(data=wine, 
+       aes(x=free.sulfur.dioxide)) +
+  geom_histogram(bins=40) +
+  scale_x_continuous(breaks=seq(0,70, 5)) +
+  ggtitle('Distribution of free sulfur dioxide concentration') + 
+  xlab('free sulfur dioxide (mg/dm3)') +
+  theme_hc()
+
+summary(wine$free.sulfur.dioxide)
+```
+***Observations***  
+
+The distribution is skewed positevely. We see some clear "dips" along" the frequency though: e.g 10/20/30 mg/dm3.  
+
+###Total sulfur dioxide
+```{r, echo=F, message=FALSE}
+ggplot(data=wine, 
+       aes(x=total.sulfur.dioxide)) +
+  geom_histogram(bins=70) +
+  scale_x_continuous(breaks=seq(0,300, 50)) +
+  ggtitle('Distribution of total sulfur dioxide concentration') + 
+  xlab('total sulfur dioxide (mg/dm3)') +
+  theme_hc()
+
+summary(wine$total.sulfur.dioxide)
+```
+***Observations***  
+
+Distribution positevely skewed. We note some outliers which have a concentration more than 6 times more important than the mean concentration.  
+
+###pH
+```{r, echo=F, message=FALSE}
+ggplot(data=wine, 
+       aes(x=pH)) +
+  geom_histogram(bins=30) +
+  scale_x_continuous(breaks=seq(2, 5, 0.25)) +
+  ggtitle('Distribution of pH') + 
+  xlab('pH') +
+  theme_hc()
+
+summary(wine$pH)
+```
+***Observations***  
+
+Distribution quite cose to a normal distributrion, centered around 3.3 and IQR close to 0.2.  
+
+###Sulphates
+```{r, echo=F, message=FALSE}
+ggplot(data=wine, 
+       aes(x=sulphates)) +
+  geom_histogram(bins=40) +
+  scale_x_continuous(breaks=seq(0, 2, 0.2)) +
+  ggtitle('Distribution of sulphates') + 
+  xlab('Concentration of sulphates (g/dm3)') +
+  theme_hc()
+
+summary(wine$sulphates)
+```
+***Observations***  
+
+The distribution is positvely skewed. The mode is close to 0.6 g/dm3. There is one outlier at 2 g/dm3 (more than 3 times the mean).
+
+<a id='bivariate'></a>  
+
+##Bivariate analysis  
+
 Due to the number of variables, let's build first an exhaustive plots matrix using **ggpairs**.
 ```{r, echo=F, message=F, fig.height=15, fig.width=15}
 ggpairs(wine)
@@ -313,7 +432,8 @@ ggplot(data=wine,
 In average better wines tend to have a lower density.  
 Again lot of outliers for medium quality wines (quality 5). For all quality levels, the distributions are rather symetric.
 
-##Multivariate Analysis
+<a id='multivariate'></a>
+##Multivariate Analysis  
 To support the multivariate analysis, let's group the quality levels and visualize the different quality group with a different color:  
 
 - low: quality levels 3
@@ -421,9 +541,13 @@ ggplot(data=wine,
 ***Observations***  
 Looking again at the extreme opposites (quality levels 3 and 8), we see that the relationships are also opposite: in average the citric acid concentration would increase together with the sugar concentration for a high quality wine, while it would decrease for a bad quality wine.  
 
-##Summary
-###Final Plots
-####Salt
+<a id='summary'></a>  
+
+##Summary  
+###Final Plots  
+####Salt  
+  
+
 ```{r, echo=F, message=FALSE}
 ggplot(data=subset(wine,
                    !is.na(wine$chlorides)),
@@ -446,7 +570,7 @@ ggplot(data=subset(wine,
        y='Sodium chloride concentration (g/dm3)')
 ```
 
-***Finding 1***  
+***Finding 1***    
 Reading this plot one conclusion is clear: good wines don't taste salty!
 
 ####Linear relationship between density and alcohol volume 
@@ -469,7 +593,7 @@ ggplot(data=wine,
 ***Finding 2***  
 The density decreases linearly with alcohol volume. And better wines have a higher alcohol concentration.
 
-####Relationship between citric acid and sugar concentration depending on quality levels
+####Relationship between citric acid and sugar concentration depending on quality levels  
 ```{r, echo=F, message=F}
 str(wine)
 ggplot(data=subset(wine,
@@ -494,9 +618,10 @@ Depending on the wine quality, the critical acid concentration moves in clearly 
 I would interpret this as a sign that good wines have to be "balanced": the more sugar, the more citric acid, so that the taste doesn't get dominated by a sweet note.  
 On the opposite a bad wine could be qualified as such precisely because one taste note like sweetness dominates all the others.
 
-##Reflections
-First of all my analysis is not exhaustive: there are 12 inputs variables in this data set, I only covered half of them (quality, sugar, chlorides, citric acid, density, alcohol). I especially didn't cover the sulfur dioxide variable. However the data set description says about sulfur dioxide that "at free SO2 concentrations over 50 ppm, SO2 becomes evident in the nose and taste of wine". So sulfur dioxide would probably be an interesting variable to consider when trying to understand therelationship between wine quality and wine chemical properties.  
+<a id='reflections'></a>  
 
-Scondly the wine quality histogram showed that the frequences of quality classes are very unbalanced: especially we don't have a lot of observations of very bad or very good wines, compared to the frequency of medium quality wines. It means that our conclusions regarding the less represented classes are more likely to be approximative than the ones regarding the most represented classes. This could be improved by having a sample of observations with balanced classes (uniform quality histogram). In this case conclusions based on comparisons between classes statistics would be more reliable.
+##Reflections  
 
+First of all my analysis is not exhaustive: there are 12 inputs variables in this data set, I only covered half of them in the bivariate and mutivariate analysis sections (quality, sugar, chlorides, citric acid, density, alcohol). I especially didn't cover the sulfur dioxide variable. However the data set description says about sulfur dioxide that "at free SO2 concentrations over 50 ppm, SO2 becomes evident in the nose and taste of wine". So sulfur dioxide would probably be an interesting variable to consider when trying to understand therelationship between wine quality and wine chemical properties.  
 
+Secondly the wine quality histogram showed that the frequences of quality classes are very unbalanced: especially we don't have a lot of observations of very bad or very good wines, compared to the frequency of medium quality wines. It means that our conclusions regarding the less represented classes are more likely to be approximative than the ones regarding the most represented classes. This could be improved by having a sample of observations with balanced classes (uniform quality histogram). In this case conclusions based on comparisons between classes statistics would be more reliable.
