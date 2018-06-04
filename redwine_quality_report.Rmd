@@ -1,7 +1,7 @@
 ---
 title: 'Project: Explore and Summarize Data - Red Wine Quality'
 author: Gauthier Riou
-Date: 6th June, 2018
+date: 6th June, 2018
 output:
   html_document:
     toc: true
