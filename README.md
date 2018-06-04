@@ -1,2 +1,3 @@
 # EDA_R
-Udacity DAND Module on Exploratory Data Analysis
+Project related to Udacity DAND Module on Exploratory Data Analysis:  
+Analysis of redwine quality
