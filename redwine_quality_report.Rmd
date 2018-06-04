@@ -1,7 +1,12 @@
 ---
 title: 'Project: Explore and Summarize Data - Red Wine Quality'
+author: Gauthier Riou
+Date: 6th June, 2018
 output:
-  html_document: default
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
   pdf_document: default
 ---
 
@@ -9,23 +14,10 @@ output:
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 ```
 
-##Table of content
-<ul>
-<li><a href="#overview">Overview</a></li>
-<li><a href="#univariate">Univariate Analysis</a></li>
-<li><a href="#bivariate">Bivariate Analysis</a></li>
-<li><a href="#multivariate">Multivariate Analysis</a></li>
-<li><a href="#summary">Summary</a></li>
-<li><a href="#reflections">Reflections</a></li>
-</ul>
-
-
-
-<a id='overview'></a>  
 
 ## Overview of data set  
 
-This tidy [data set](https://www.google.com/url?q=https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityReds.csv&sa=D&ust=1527776992677000) contains 1,599 red wines with 11 variables describing chemical wine properties. At least 3 wine experts rated the quality of each wine, providing a rating between 0 (very bad) and 10 (very excellent).  
+This tidy [data set](./wineQualityReds.csv) contains 1,599 red wines with 11 variables describing chemical wine properties. At least 3 wine experts rated the quality of each wine, providing a rating between 0 (very bad) and 10 (very excellent).  
 In all my study, my dependent variable will be the wine quality. All the other wine properties are considered independent variables analysed to try to predict wine quality.
 ```{r, echo=FALSE, message=FALSE}
 library(ggplot2)
@@ -95,7 +87,7 @@ ggplot(data=wine,
 summary(wine$citric.acid)
 ```
 ***Observations***  
-The distribution is slightly positively skewed, with lot of observations having 0 g/dm3 of citric acid. I would say that this is normal given the [data set description](https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityInfo.txt) says that citric acid is "found in small quantities".  
+The distribution is slightly positively skewed, with lot of observations having 0 g/dm3 of citric acid. I would say that this is normal given the [data set description](./wineQualityInfo.txt) says that citric acid is "found in small quantities".  
 There are 2 other local modes: 0.3 g/dm3 and 0.55 g/dm3.  
 
 ###Sweetness
